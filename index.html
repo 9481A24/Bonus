@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema de Bônus - Azulejista</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f2f2f2;
+    padding: 20px;
+}
+
+h2 {
+    text-align: center;
+}
+
+.box {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+input, button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+}
+
+button {
+    background: #1d8f00;
+    color: white;
+    border: none;
+    font-weight: bold;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+}
+th {
+    background: #eee;
+}
+.usado {
+    background: #ffdddd;
+    color: red;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Controle de Bônus – 15% Desconto</h2>
+
+<div class="box">
+    <label>Nome do Cliente</label>
+    <input type="text" id="cliente">
+
+    <label>WhatsApp do Cliente</label>
+    <input type="text" id="whats">
+
+    <button onclick="gerarBonus()">Gerar Código de Bônus</button>
+</div>
+
+<div class="box">
+    <h3>Códigos Gerados</h3>
+    <table id="tabela">
+        <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>WhatsApp</th>
+            <th>Data</th>
+            <th>Baixar PDF</th>
+            <th>Usado</th>
+        </tr>
+    </table>
+</div>
+
+<script>
+// Gerar código único
+function gerarCodigo() {
+    return "BONUS-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+}
+
+// Salvar lista no navegador
+function salvarLista(lista) {
+    localStorage.setItem("bonus_lista", JSON.stringify(lista));
+}
+
+// Carregar lista salva
+function carregarLista() {
+    return JSON.parse(localStorage.getItem("bonus_lista") || "[]");
+}
+
+// Atualizar tabela
+function atualizarTabela() {
+    let tabela = document.getElementById("tabela");
+    let lista = carregarLista();
+
+    tabela.innerHTML = `
+        <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>WhatsApp</th>
+            <th>Data</th>
+            <th>Baixar PDF</th>
+            <th>Usado</th>
+        </tr>
+    `;
+
+    lista.forEach((item, i) => {
+        let linha = document.createElement("tr");
+        if (item.usado) linha.classList.add("usado");
+
+        linha.innerHTML = `
+            <td>${item.codigo}</td>
+            <td>${item.cliente}</td>
+            <td>${item.whats}</td>
+            <td>${item.data}</td>
+            <td><button onclick="baixarPDF('${i}')">PDF</button></td>
+            <td><button onclick="marcarUsado(${i})">Marcar</button></td>
+        `;
+
+        tabela.appendChild(linha);
+    });
+}
+
+// Gerar bônus
+function gerarBonus() {
+    let cliente = document.getElementById("cliente").value;
+    let whats = document.getElementById("whats").value;
+
+    if (!cliente || !whats) {
+        alert("Preencha nome e WhatsApp!");
+        return;
+    }
+
+    let lista = carregarLista();
+    let codigo = gerarCodigo();
+
+    let item = {
+        codigo,
+        cliente,
+        whats,
+        data: new Date().toLocaleDateString(),
+        usado: false
+    };
+
+    lista.push(item);
+    salvarLista(lista);
+    atualizarTabela();
+
+    alert("Bônus criado com sucesso!");
+}
+
+// Marcar bônus como usado
+function marcarUsado(i) {
+    let lista = carregarLista();
+    lista[i].usado = true;
+    salvarLista(lista);
+    atualizarTabela();
+}
+
+// Gerar PDF do comprovante
+function baixarPDF(i) {
+    let lista = carregarLista();
+    let b = lista[i];
+
+    let conteudo =
+`COMPROVANTE DE BÔNUS - 15% DESCONTO
+
+Cliente: ${b.cliente}
+WhatsApp: ${b.whats}
+
+Código do Bônus: ${b.codigo}
+Data: ${b.data}
+
+Validade: Uso único
+Promoção válida apenas para primeira contratação.
+
+Serviço: Azulejista Profissional
+Responsável: Gênesis Azulejista
+WhatsApp: (32) 99543-9612`;
+
+    let blob = new Blob([conteudo], { type: "application/pdf" });
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `comprovante_${b.codigo}.pdf`;
+    link.click();
+}
+
+atualizarTabela();
+</script>
+
+</body>
+</html>
