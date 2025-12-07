@@ -2,204 +2,170 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Sistema de Bônus - Azulejista</title>
+<title>Sistema de Bônus</title>
+
+<!-- jsPDF para gerar PDF REAL -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-body {
-    font-family: Arial;
-    background: #f2f2f2;
-    padding: 20px;
-}
-
-h2 {
-    text-align: center;
-}
-
-.box {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-input, button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    font-size: 16px;
-    border-radius: 8px;
-}
-
-button {
-    background: #1d8f00;
-    color: white;
-    border: none;
-    font-weight: bold;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-th, td {
-    border: 1px solid #ccc;
-    padding: 10px;
-    text-align: center;
-}
-th {
-    background: #eee;
-}
-.usado {
-    background: #ffdddd;
-    color: red;
-    font-weight: bold;
-}
+    body {
+        font-family: Arial;
+        padding: 20px;
+        background: #f5f5f5;
+    }
+    .card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 0 8px #ccc;
+        margin-bottom: 10px;
+    }
+    input, button {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: 1px solid #aaa;
+        font-size: 16px;
+    }
+    button {
+        background: black;
+        color: white;
+        cursor: pointer;
+    }
+    .codigo {
+        font-weight: bold;
+        color: green;
+    }
 </style>
 </head>
-
 <body>
 
-<h2>Controle de Bônus – 15% Desconto</h2>
+<h2>Sistema de Bônus - Gênesis Azulejista</h2>
 
-<div class="box">
-    <label>Nome do Cliente</label>
-    <input type="text" id="cliente">
+<div class="card">
+    <h3>Gerar Bônus</h3>
 
-    <label>WhatsApp do Cliente</label>
-    <input type="text" id="whats">
+    <label>Nome do Cliente:</label>
+    <input id="cliente">
 
-    <button onclick="gerarBonus()">Gerar Código de Bônus</button>
+    <label>WhatsApp do Cliente:</label>
+    <input id="whats">
+
+    <button onclick="gerarBonus()">Gerar Bônus</button>
 </div>
 
-<div class="box">
-    <h3>Códigos Gerados</h3>
-    <table id="tabela">
-        <tr>
-            <th>Código</th>
-            <th>Cliente</th>
-            <th>WhatsApp</th>
-            <th>Data</th>
-            <th>Baixar PDF</th>
-            <th>Usado</th>
-        </tr>
-    </table>
-</div>
+<h3>Registros:</h3>
+<div id="lista"></div>
 
 <script>
-// Gerar código único
-function gerarCodigo() {
-    return "BONUS-" + Math.random().toString(36).substr(2, 9).toUpperCase();
+// --------------------------------------------------------
+// CÓDIGO QUE NUNCA REPETE (Código Único)
+// --------------------------------------------------------
+function gerarCodigoUnico() {
+    let agora = new Date();
+    let ano = agora.getFullYear().toString().slice(-2);
+    let mes = (agora.getMonth() + 1).toString().padStart(2, "0");
+    let dia = agora.getDate().toString().padStart(2, "0");
+    let hora = agora.getHours().toString().padStart(2, "0");
+    let min = agora.getMinutes().toString().padStart(2, "0");
+    let seg = agora.getSeconds().toString().padStart(2, "0");
+    let ms = agora.getMilliseconds().toString().padStart(3, "0");
+    let random = Math.floor(Math.random() * 9999).toString().padStart(4, "0");
+
+    return "BNS-" + ano + mes + dia + hora + min + seg + ms + "-" + random;
 }
 
-// Salvar lista no navegador
-function salvarLista(lista) {
-    localStorage.setItem("bonus_lista", JSON.stringify(lista));
-}
-
-// Carregar lista salva
+// --------------------------------------------------------
+// Salvar e carregar lista
+// --------------------------------------------------------
 function carregarLista() {
-    return JSON.parse(localStorage.getItem("bonus_lista") || "[]");
+    return JSON.parse(localStorage.getItem("bonus") || "[]");
 }
 
-// Atualizar tabela
-function atualizarTabela() {
-    let tabela = document.getElementById("tabela");
+function salvarLista(lista) {
+    localStorage.setItem("bonus", JSON.stringify(lista));
+}
+
+function mostrarLista() {
     let lista = carregarLista();
+    let html = "";
 
-    tabela.innerHTML = `
-        <tr>
-            <th>Código</th>
-            <th>Cliente</th>
-            <th>WhatsApp</th>
-            <th>Data</th>
-            <th>Baixar PDF</th>
-            <th>Usado</th>
-        </tr>
-    `;
+    lista.forEach((b, i) => {
+        html += `
+        <div class='card'>
+            <strong>Cliente:</strong> ${b.cliente}<br>
+            <strong>WhatsApp:</strong> ${b.whats}<br>
+            <strong>Código:</strong> <span class="codigo">${b.codigo}</span><br>
+            <strong>Data:</strong> ${b.data}<br><br>
 
-    lista.forEach((item, i) => {
-        let linha = document.createElement("tr");
-        if (item.usado) linha.classList.add("usado");
-
-        linha.innerHTML = `
-            <td>${item.codigo}</td>
-            <td>${item.cliente}</td>
-            <td>${item.whats}</td>
-            <td>${item.data}</td>
-            <td><button onclick="baixarPDF('${i}')">PDF</button></td>
-            <td><button onclick="marcarUsado(${i})">Marcar</button></td>
+            <button onclick="baixarPDF(${i})">Baixar Comprovante PDF</button>
+        </div>
         `;
-
-        tabela.appendChild(linha);
     });
+
+    document.getElementById("lista").innerHTML = html;
 }
 
+// --------------------------------------------------------
 // Gerar bônus
+// --------------------------------------------------------
 function gerarBonus() {
-    let cliente = document.getElementById("cliente").value;
-    let whats = document.getElementById("whats").value;
+    let cliente = document.getElementById("cliente").value.trim();
+    let whats = document.getElementById("whats").value.trim();
 
-    if (!cliente || !whats) {
-        alert("Preencha nome e WhatsApp!");
+    if (cliente === "" || whats === "") {
+        alert("Preencha todos os campos!");
         return;
     }
 
-    let lista = carregarLista();
-    let codigo = gerarCodigo();
+    let codigo = gerarCodigoUnico();
 
-    let item = {
-        codigo,
-        cliente,
-        whats,
-        data: new Date().toLocaleDateString(),
-        usado: false
+    let registro = {
+        cliente: cliente,
+        whats: whats,
+        codigo: codigo,
+        data: new Date().toLocaleString()
     };
 
-    lista.push(item);
-    salvarLista(lista);
-    atualizarTabela();
-
-    alert("Bônus criado com sucesso!");
-}
-
-// Marcar bônus como usado
-function marcarUsado(i) {
     let lista = carregarLista();
-    lista[i].usado = true;
+    lista.push(registro);
     salvarLista(lista);
-    atualizarTabela();
+
+    mostrarLista();
+    alert("Bônus gerado com sucesso!");
 }
 
-// Gerar PDF do comprovante
-function baixarPDF(i) {
+// --------------------------------------------------------
+// Gerar PDF REAL com jsPDF
+// --------------------------------------------------------
+async function baixarPDF(i) {
+    const { jsPDF } = window.jspdf;
     let lista = carregarLista();
     let b = lista[i];
 
-    let conteudo =
-`COMPROVANTE DE BÔNUS - 15% DESCONTO
+    let doc = new jsPDF();
 
-Cliente: ${b.cliente}
-WhatsApp: ${b.whats}
+    doc.setFontSize(20);
+    doc.text("COMPROVANTE DE BÔNUS", 10, 20);
 
-Código do Bônus: ${b.codigo}
-Data: ${b.data}
+    doc.setFontSize(12);
+    doc.text(`Cliente: ${b.cliente}`, 10, 40);
+    doc.text(`WhatsApp: ${b.whats}`, 10, 50);
+    doc.text(`Código do Bônus: ${b.codigo}`, 10, 60);
+    doc.text(`Data: ${b.data}`, 10, 70);
 
-Validade: Uso único
-Promoção válida apenas para primeira contratação.
+    doc.text("Primeira contratação: 15% de desconto", 10, 90);
+    doc.text("Cada indicação confirmada gera R$ 200 de bônus", 10, 100);
+    doc.text("Bônus pode ser trocado por serviços", 10, 110);
 
-Serviço: Azulejista Profissional
-Responsável: Gênesis Azulejista
-WhatsApp: (32) 99543-9612`;
+    doc.text("Prestador: Gênesis Azulejista", 10, 130);
+    doc.text("WhatsApp: (32) 99543-9612", 10, 140);
 
-    let blob = new Blob([conteudo], { type: "application/pdf" });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `comprovante_${b.codigo}.pdf`;
-    link.click();
+    doc.save(`comprovante_${b.codigo}.pdf`);
 }
 
-atualizarTabela();
+mostrarLista();
 </script>
 
 </body>
